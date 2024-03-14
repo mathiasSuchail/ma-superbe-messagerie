@@ -1,0 +1,111 @@
+<div id="app">
+    <div class="flex flex-row h-screen bg-slate-100">
+        <div class="w-1/4 h-full border shadow flex flex-col justify-start gap-5 relative">
+            <div class="absolute top-3 right-3 flex gap-3 text-blue-800">
+                <button><i class="text-xl fa-solid fa-user hover:text-blue-500"></i></button>
+                <button class=""><i class="text-xl fa-solid fa-right-from-bracket hover:text-blue-500"></i></button>
+            </div>
+            <h2 class="mx-auto mt-5">[[ username ]]</h2>
+            <input class="w-[80%] shadow border rounded-full mx-auto px-3 py-1" type="text" placeholder="Rechercher une conversation" v-model="search">
+            <hr class="w-[80%] mx-auto">
+            <button class="mx-auto text-blue-800 px-3 py-1 border-blue-300 shadow shadow-blue-300 rounded-xl hover:bg-blue-200">
+                <i class="fa-solid fa-user-plus"></i> Nouvelle conversation
+            </button>
+            <i class="fas fa-logout"></i>
+            <div v-for="conversation in filteredConversations" :key="conversation.id" class="px-5 py-3 hover:bg-blue-200 flex flex-col cursor-pointer" @click="activeConversation=conversation">
+                <h4 class="text-md m-0">[[ conversation.name ]]</h4>
+                <p class="text-sm text-slate-600">[[ conversation.lastMessage ]]</p>
+            </div>
+        </div>
+        <p class="m-auto text-slate-700" v-if="activeConversation === null">Veullez selectionner une conversation...</p>
+        <div v-else class="flex flex-col justify-end p-5 w-full">
+                <div class="flex flex-col gap-5 p-5 justify-start w-full">
+                    <div v-for="message in activeConversation.messages" class="w-full flex" :class="message.sender === username ? 'justify-end' : '' ">
+                        <p class="border shadow rounded-xl p-3 w-fit" :class="{'bg-blue-200': message.sender === username}">[[ message.content ]]</p>
+                    </div>
+                </div>
+            <div class="relative">
+                <textarea class="border shadow rounded-xl resize-none px-5 py-1 w-full" placeholder="Tapez votre message" ref="textarea" @keydown.enter="sendMessage">
+                </textarea>
+                <button class="absolute bottom-5 right-5" @click="sendMessage">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://kit.fontawesome.com/0179349a64.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    new Vue({ // Again, vm is our Vue instance's name for consistency.
+        el: '#app',
+        delimiters: ['[[', ']]'],
+
+        data: {
+            username: "Mathias SUCHAIL",
+            search: "",
+            activeConversation: null,
+            conversations: [
+                {
+                    id: 1,
+                    name: "toto",
+                    lastMessage: "Salut, ça va ?",
+                    lastMessageDate: "12:00",
+                    unreadMessages: 0,
+                    messages: [
+                        {
+                            id: 1,
+                            content: "Salut, ça va ?",
+                            date: "12:00",
+                            sender: "toto"
+                        },
+                        {
+                            id: 2,
+                            content: "Oui et toi ?",
+                            date: "12:01",
+                            sender: "Mathias SUCHAIL"
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: "Mathias SUCHAIL",
+                    lastMessage: "Salut, ça va ?",
+                    lastMessageDate: "12:00",
+                    unreadMessages: 0,
+                    messages: [],
+                },
+                {
+                    id: 3,
+                    name: "Mathias SUCHAIL",
+                    lastMessage: "Salut, ça va ?",
+                    lastMessageDate: "12:00",
+                    unreadMessages: 0
+                }
+            ]
+        },
+        methods: {
+            sendMessage() {
+                const message = this.$refs.textarea.value;
+                if(message.trim() !== ""){
+                    this.activeConversation.messages.push({
+                        id: this.activeConversation.messages.length + 1,
+                        content: message,
+                        date: new Date().toLocaleTimeString(),
+                        sender: this.username
+                    });
+                }
+                this.$refs.textarea.value = "";
+            }
+        },
+        computed: {
+            filteredConversations() {
+                return this.conversations.filter(conversation => {
+                    return conversation.name.toLowerCase().includes(this.search.toLowerCase());
+                });
+            }
+        }
+    })
+</script>
