@@ -99,11 +99,12 @@ def messages():
     else:
         return render_template("mailbox.html")
 
-with app.app_context():
-    db = get_db()
-    with app.open_resource('db/schema.sql', mode='r') as f:
-        db.cursor().executescript(f.read())
-    db.commit()
+if not Path(DATABASE).is_file():
+    with app.app_context():
+        db = get_db()
+        with app.open_resource('db/schema.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
 
 @app.route("/api/conversations")
 def conversations():
