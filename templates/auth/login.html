@@ -1,13 +1,17 @@
 {% extends 'base.html' %}
 
+
 {% block content %}
-<div class="h-100  flex-col">
-    <form method="post" class="card flex-col m-auto">
+<div class="">
+    <form method="post" class="flex flex-col p-20 border shadow-xl shadow-blue-100 m-auto w-1/2 rounded-xl mt-[20vh] gap-5">
         <label for="username">Username</label>
-        <input name="username" id="username" required>
+        <input class="rounded-full border shadow px-3 py-1" name="username" id="username" required>
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" required>
-        <input type="submit" value="Se connecter" class="m-auto">
+        <input type="password" class="rounded-full border shadow px-3 py-1" name="password" id="password" required>
+        {% if request.args.get('error') != None %}
+            <p class="text-red-500 font-bold">{{ request.args.get('error') }}</p>
+        {% endif %}
+        <input type="submit" class="rounded bg-blue-200 mt-10 hover:bg-slate-200 w-fit px-10 py-3 rounded-full cursor-pointer mx-auto" value="Se connecter">
     </form>
 </div>
 {% endblock %}

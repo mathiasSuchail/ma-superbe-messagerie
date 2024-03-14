@@ -10,7 +10,6 @@ CREATE TABLE conversation (
     id INTEGER PRIMARY KEY AUTOINCREMENT ,
     user1_id INTEGER NOT NULL,
     user2_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
     FOREIGN KEY (user1_id) REFERENCES user(id),
     FOREIGN KEY (user2_id) REFERENCES user(id)
 );
@@ -26,5 +25,7 @@ CREATE TABLE message (
 );
 
 
-INSERT INTO user (username, password) VALUES ('admin', 'admin');
-
+INSERT INTO user (username, password) VALUES ('rico', 'rico');
+INSERT INTO user (username, password) VALUES ('toto', 'toto');
+INSERT INTO conversation (user1_id, user2_id) VALUES (1, 2);
+INSERT INTO message (conversation_id, sender_id, content) VALUES (2, 1, 'Hello Rocco');

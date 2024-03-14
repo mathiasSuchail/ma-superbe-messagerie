@@ -1,23 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Ma superbe messagerie</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <h1>Bienvenue sur votre superbe messagerie</h1>
-    </header>
-    <section class="h-100">
-        <div class="card flex-col m-auto">
-            <a href="/login">
-                Se connecter
-            </a>
-            <a href="/register">
-                Créer un compte
-            </a>
-        </div>
-    </section>
-</body>
-</html>
+{% extends 'base.html' %}
+
+
+{% block content %}
+<div class="">
+    <div class="flex flex-col p-20 border shadow-xl shadow-blue-100 m-auto w-1/2 rounded-xl mt-[20vh] gap-5">
+        <h1>Bienvenue sur la meilleure messagerie du monde!</h1>
+        <a class="text-blue-500" href="{{ url_for('login') }}">Connectez-vous pour commencer à discuter avec vos amis!</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 
 app = Flask(__name__)
 
@@ -64,11 +64,18 @@ def login():
             return redirect("/mailbox")
         return render_template("auth/login.html")
     else:
+        #Récupération de l'utilisateur
         loggedUser = get_db().execute("SELECT * FROM user WHERE username = ? AND password = ?", (request.form["username"], request.form["password"])).fetchone()
+
+        #Récupération des nom des colonnes
+        cursor = get_db().cursor()
+        cursor.execute('SELECT * FROM user LIMIT 1')
+        field_names = [i[0] for i in cursor.description]
+
         if loggedUser is None:
-            flash("Identifiants incorrects")
-            return redirect("/login")
+            return redirect(url_for('login', error="Nom d'utilisateur ou mot de passe incorrect."))
         else:
+            loggedUser = dict(zip(field_names, loggedUser))
             session["loggedUser"] = loggedUser
             return redirect("/mailbox")
 
@@ -90,6 +97,20 @@ if not Path(DATABASE) .exists():
         with app.open_resource('db/schema.sql', mode='r') as f:
             db.cursor().executescript(f.read())
         db.commit()
+
+@app.route("/api/conversations")
+def conversations():
+    #récupération des conversations
+    user_id = session["loggedUser"]["id"]
+    conversations_data = query_db('SELECT * FROM conversation WHERE user1_id = ? OR user2_id = ?', (user_id, user_id))
+
+    #récupération des noms des colonnes
+    cursor = get_db().cursor()
+    cursor.execute('SELECT * FROM conversation LIMIT 1')
+    field_names = [i[0] for i in cursor.description]
+    conversations_json = [dict(zip(field_names, row)) for row in conversations_data]
+
+    return jsonify(conversations_json)
 
 @app.route("/test")
 def test():
