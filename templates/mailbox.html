@@ -1,6 +1,6 @@
 <div id="app">
     <div class="h-screen w-full flex flex-col absolute" v-if="showModal" @click="showModal=false">
-        <div class="m-auto w-1/3" @click.stop>
+        <div @click.stop class="m-auto w-1/3">
             <div class="p-5 shadow rounded-xl bg-white backdrop-blur flex flex-col gap-10">
                 <div class="flex justify-between">
                     <h3 class="text-2xl">Nouvelle conversation</h3>
@@ -8,8 +8,8 @@
                 </div>
                 <form class="flex flex-col gap-3" @submit.prevent="addConversation">
                     <label for="userToAdd" class="w-max">Utilisateur à ajouter :</label>
-                    <select name="id" class="bg-inherit border px-3 py-1" v-model="userToAdd.id">
-                        <option v-for="user in availableUsers" :value="user.id">[[ user.name ]]</option>
+                    <select id="userToAdd" name="userToAdd" class="bg-inherit border px-3 py-1" v-model="userToAdd.id">
+                        <option v-for="user in availableUsers" :value="user.id">[[ user.username ]]</option>
                     </select>
                     <button class="bg-green-200 w-fit m-auto shadow-xl rounded-full px-5 py-2 hover:shadow-lg">Envoyer un message</button>
                 </form>
@@ -19,13 +19,12 @@
     <div class="flex flex-row h-screen bg-slate-100">
         <div class="w-1/4 h-full border shadow flex flex-col justify-start gap-5 relative">
             <div class="absolute top-5 right-5 flex gap-3 text-blue-800">
-                <button><i class="text-xl fa-solid fa-user hover:text-blue-500"></i></button>
                 <button class=""><a href="/logout"><i class="text-xl fa-solid fa-right-from-bracket hover:text-blue-500"></i></a></button>
             </div>
             <h2 class="mx-auto mt-5">[[ activeUser.username ]]</h2>
             <input class="w-3/4 shadow border rounded-full mx-auto px-3 py-1" type="text" placeholder="Rechercher une conversation" v-model="search">
             <hr class="w-3/4 mx-auto">
-            <button class="mx-auto text-blue-800 px-3 py-1 border-blue-300 shadow shadow-blue-300 rounded-xl hover:bg-blue-200" @click="showModal=true">
+            <button class="mx-auto text-blue-800 px-3 py-1 border-blue-300 shadow shadow-blue-300 rounded-xl hover:bg-blue-200" @click="getNewFriends">
                 <i class="fa-solid fa-user-plus"></i> Nouvelle conversation
             </button>
             <i class="fas fa-logout"></i>
@@ -67,7 +66,7 @@
             availableUsers: [
                 {
                     id: 2,
-                    name: "",
+                    username: "",
                 }
             ],
             userToAdd: {
@@ -108,14 +107,32 @@
             },
             autoRefresh() {
                 setInterval(() => {
-                    this.getConversations(this.activeConversation.id);
+                    this.getConversations(this.activeConversation?.id);
                 }, 1000);
             },
             addConversation() {
                 this.userToAdd= this.availableUsers.find(user => user.id === this.userToAdd.id);
-                this.userToAdd.messages= []
-                this.conversations.unshift(this.userToAdd)
-                this.showModal = false
+                const conversation = {
+                    friend_id: this.userToAdd.id,
+                    messages: []
+                }
+                fetch('/api/create_conversation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        friend_id: this.userToAdd.id
+                    })
+                }).then(
+                    id => id.json()
+                ).then(
+                    id => {
+                        this.getConversations(id)
+                        this.showModal = false;
+                    }
+                )
+
             },
             getConversations(activconversationId = null){
                 fetch('/api/conversations')
@@ -133,6 +150,15 @@
                     .then(user => {
                         this.activeUser = user;
                         console.log(this.activeUser)
+                    });
+            },
+            getNewFriends(){
+                fetch('/api/new_friends')
+                    .then(response => response.json())
+                    .then(friends => {
+                        this.availableUsers = friends;
+                        console.log(this.availableUsers)
+                        this.showModal = true;
                     });
             }
         },

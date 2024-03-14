@@ -152,7 +152,6 @@ def messages_post():
         return jsonify({"error": "Non connecté"})
     else:
         data = request.get_json()
-
         conversation_id = data["conversation_id"]
         content = data["content"]
         sender_id = session["loggedUser"]["id"]
@@ -160,6 +159,36 @@ def messages_post():
         get_db().execute("INSERT INTO message (conversation_id, sender_id, content) VALUES (?, ?, ?)", (conversation_id, sender_id, content))
         get_db().commit()
         return jsonify({"status": "ok"})
+
+#retour tous les utlisateurs à qui je n'ai jamais envoyé de messages
+@app.route("/api/new_friends")
+def new_friends():
+    user_id = session["loggedUser"]["id"]
+
+    conversations = query_db('SELECT user1_id, user2_id FROM conversation WHERE user1_id = ? OR user2_id = ?', (user_id, user_id))
+    userIds = []
+    for conversation in conversations:
+        if conversation[0] != user_id:
+            userIds.append(conversation[0])
+        else:
+            userIds.append(conversation[1])
+
+    friends = query_db('SELECT user.id, user.username FROM user WHERE user.id NOT IN ({}) AND user.id != ?'.format(','.join('?'*len(userIds))), userIds + [user_id])
+
+    cursor = get_db().cursor()
+    cursor.execute('SELECT * FROM user LIMIT 1')
+    field_names = [i[0] for i in cursor.description]
+    return jsonify([dict(zip(field_names, row)) for row in friends])
+
+@app.route("/api/create_conversation", methods=["POST"])
+def create_conversation():
+    user_id = session["loggedUser"]["id"]
+    friend_id = request.get_json()["friend_id"]
+    get_db().execute("INSERT INTO conversation (user1_id, user2_id) VALUES (?, ?)", (user_id, friend_id))
+    get_db().commit()
+
+    convsersation_id = get_db().execute("SELECT id FROM conversation WHERE user1_id = ? AND user2_id = ?", (user_id, friend_id)).fetchone()[0]
+    return jsonify(convsersation_id)
 
 @app.route("/test")
 def test():
