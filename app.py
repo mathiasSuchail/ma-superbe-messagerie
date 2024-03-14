@@ -49,12 +49,20 @@ def register():
             return redirect("/mailbox")
         return render_template("auth/register.html")
     else:
-        loggedUser = get_db().execute("SELECT * FROM user WHERE username = ? AND password = ?", (request.form["username"], request.form["password"])).fetchone()
-        if loggedUser is None:
-            return flash("Utilisateur déjà existant")
+        userExist = get_db().execute("SELECT id FROM user WHERE username = ?", (request.form["username"],)).fetchone()
+        if userExist:
+            return redirect(url_for('register', error="Nom d'utilisateur déjà existant."))
+        if request.form["password"] != request.form["cpassword"]:
+            return redirect(url_for('register', error="Les mots de passe ne correspondent pas."))
+        if len(request.form["password"]) < 8:
+            return redirect(url_for('register', error="Le mot de passe doit contenir au moins 8 caractères."))
+        if len(request.form["username"]) < 4:
+            return redirect(url_for('register', error="Le nom d'utilisateur doit contenir au moins 4 caractères."))
+
         else:
-            session["loggedUser"] = loggedUser
-            return redirect("/mailbox")
+            get_db().execute("INSERT INTO user (username, password) VALUES (?, ?)", (request.form["username"], request.form["password"]))
+            get_db().commit()
+            return redirect("/login")
 
 
 @app.route("/login", methods=["GET", "POST"])
