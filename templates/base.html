@@ -1,0 +1,27 @@
+<!doctype html>
+<head>
+  <title>{% block title %}{% endblock %} - Ma superbe messagerie</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="h-100">
+  <nav class="flex-row">
+    <h1>Ma superbe messagerie</h1>
+    <ul class="flex-row">
+        <li><a href="{{ url_for('index') }}">Home</a>
+      {% if g.user %}
+        <li><span>{{ g.user['username'] }}</span>
+  <!--      <li><a href="{{ url_for('auth.logout') }}">Log Out</a>-->
+      {% else %}
+        <li><a href="{{ url_for('register') }}">Register</a>
+        <li><a href="{{ url_for('login') }}">Log In</a>
+      {% endif %}
+    </ul>
+  </nav>
+  <section class="content">
+    {% for message in get_flashed_messages() %}
+      <div class="flash">{{ message }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </section>
+</body>

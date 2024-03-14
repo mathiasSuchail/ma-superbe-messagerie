@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="h-100  flex-col">
+    <form method="post" class="card flex-col m-auto">
+    <label for="username">Username</label>
+    <input name="username" id="username" required>
+    <label for="password">Password</label>
+    <input type="password" name="cpassword" id="password" required>
+      <label for="cpassword">Confirm password</label>
+    <input type="password" name="cpassword" id="cpassword" required>
+    <input type="submit" value="Se connecter" class="m-auto">
+  </form>
+</div>
+{% endblock %}
