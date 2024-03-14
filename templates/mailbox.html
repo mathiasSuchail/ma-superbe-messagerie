@@ -1,36 +1,56 @@
 <div id="app">
+    <div class="h-screen w-full flex flex-col absolute" v-if="showModal" @click="showModal=false">
+        <div class="m-auto w-1/3" @click.stop>
+            <div class="p-5 shadow rounded-xl bg-white backdrop-blur flex flex-col gap-10">
+                <div class="flex justify-between">
+                    <h3 class="text-2xl">Nouvelle conversation</h3>
+                    <button @click="showModal=false"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <form class="flex flex-col gap-3" @submit.prevent="addConversation">
+                    <label for="userToAdd" class="w-max">Utilisateur à ajouter :</label>
+                    <select name="id" class="bg-inherit border px-3 py-1" v-model="userToAdd.id">
+                        <option v-for="user in availableUsers" :value="user.id">[[ user.name ]]</option>
+                    </select>
+                    <button class="bg-green-200 w-fit m-auto shadow-xl rounded-full px-5 py-2 hover:shadow-lg">Envoyer un message</button>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="flex flex-row h-screen bg-slate-100">
         <div class="w-1/4 h-full border shadow flex flex-col justify-start gap-5 relative">
-            <div class="absolute top-3 right-3 flex gap-3 text-blue-800">
+            <div class="absolute top-5 right-5 flex gap-3 text-blue-800">
                 <button><i class="text-xl fa-solid fa-user hover:text-blue-500"></i></button>
-                <button class=""><i class="text-xl fa-solid fa-right-from-bracket hover:text-blue-500"></i></button>
+                <button class=""><a href="/logout"><i class="text-xl fa-solid fa-right-from-bracket hover:text-blue-500"></i></a></button>
             </div>
             <h2 class="mx-auto mt-5">[[ username ]]</h2>
-            <input class="w-[80%] shadow border rounded-full mx-auto px-3 py-1" type="text" placeholder="Rechercher une conversation" v-model="search">
-            <hr class="w-[80%] mx-auto">
-            <button class="mx-auto text-blue-800 px-3 py-1 border-blue-300 shadow shadow-blue-300 rounded-xl hover:bg-blue-200">
+            <input class="w-3/4 shadow border rounded-full mx-auto px-3 py-1" type="text" placeholder="Rechercher une conversation" v-model="search">
+            <hr class="w-3/4 mx-auto">
+            <button class="mx-auto text-blue-800 px-3 py-1 border-blue-300 shadow shadow-blue-300 rounded-xl hover:bg-blue-200" @click="showModal=true">
                 <i class="fa-solid fa-user-plus"></i> Nouvelle conversation
             </button>
             <i class="fas fa-logout"></i>
-            <div v-for="conversation in filteredConversations" :key="conversation.id" class="px-5 py-3 hover:bg-blue-200 flex flex-col cursor-pointer" @click="activeConversation=conversation">
+            <div v-for="conversation in filteredConversations" :key="conversation.id" class="px-5 py-3 hover:bg-blue-200 flex flex-col cursor-pointer" :class="{'bg-blue-300': activeConversation?.id === conversation.id}" @click="activeConversation=conversation">
                 <h4 class="text-md m-0">[[ conversation.name ]]</h4>
-                <p class="text-sm text-slate-600">[[ conversation.lastMessage ]]</p>
+                <p v-if="conversation.messages.length>0" class="text-sm text-slate-600 overflow-hidden">[[ conversation.messages[conversation.messages.length - 1].content ]]</p>
             </div>
         </div>
-        <p class="m-auto text-slate-700" v-if="activeConversation === null">Veullez selectionner une conversation...</p>
-        <div v-else class="flex flex-col justify-end p-5 w-full">
+        <div class="flex flex-col justify-end p-5 w-3/4">
+            <p class="m-auto text-slate-700" v-if="activeConversation === null">Veullez selectionner une conversation...</p>
+            <div v-else>
                 <div class="flex flex-col gap-5 p-5 justify-start w-full">
                     <div v-for="message in activeConversation.messages" class="w-full flex" :class="message.sender === username ? 'justify-end' : '' ">
                         <p class="border shadow rounded-xl p-3 w-fit" :class="{'bg-blue-200': message.sender === username}">[[ message.content ]]</p>
                     </div>
                 </div>
-            <div class="relative">
-                <textarea class="border shadow rounded-xl resize-none px-5 py-1 w-full" placeholder="Tapez votre message" ref="textarea" @keydown.enter="sendMessage">
-                </textarea>
-                <button class="absolute bottom-5 right-5" @click="sendMessage">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
+                <div class="relative">
+                    <textarea class="border shadow rounded-xl resize-none px-5 py-1 w-full" placeholder="Tapez votre message" ref="textarea" @keydown.enter="sendMessage">
+                    </textarea>
+                    <button class="absolute bottom-5 right-5" @click="sendMessage">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -44,6 +64,19 @@
         delimiters: ['[[', ']]'],
 
         data: {
+            availableUsers: [
+                {
+                    id: 2,
+                    name: "alix",
+                }
+            ],
+            userToAdd: {
+                id: 0,
+                name: "",
+                unreadMessages: 0,
+                concersations: []
+            },
+            showModal: false,
             username: "Mathias SUCHAIL",
             search: "",
             activeConversation: null,
@@ -51,8 +84,6 @@
                 {
                     id: 1,
                     name: "toto",
-                    lastMessage: "Salut, ça va ?",
-                    lastMessageDate: "12:00",
                     unreadMessages: 0,
                     messages: [
                         {
@@ -65,25 +96,10 @@
                             id: 2,
                             content: "Oui et toi ?",
                             date: "12:01",
-                            sender: "Mathias SUCHAIL"
+                            sender: this.username
                         }
                     ]
                 },
-                {
-                    id: 2,
-                    name: "Mathias SUCHAIL",
-                    lastMessage: "Salut, ça va ?",
-                    lastMessageDate: "12:00",
-                    unreadMessages: 0,
-                    messages: [],
-                },
-                {
-                    id: 3,
-                    name: "Mathias SUCHAIL",
-                    lastMessage: "Salut, ça va ?",
-                    lastMessageDate: "12:00",
-                    unreadMessages: 0
-                }
             ]
         },
         methods: {
@@ -98,6 +114,13 @@
                     });
                 }
                 this.$refs.textarea.value = "";
+
+            },
+            addConversation() {
+                this.userToAdd= this.availableUsers.find(user => user.id === this.userToAdd.id);
+                this.userToAdd.messages= []
+                this.conversations.unshift(this.userToAdd)
+                this.showModal = false
             }
         },
         computed: {
