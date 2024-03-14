@@ -20,6 +20,7 @@ CREATE TABLE message (
     conversation_id INTEGER NOT NULL,
     sender_id INTEGER NOT NULL,
     content TEXT NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES conversation(id),
     FOREIGN KEY (sender_id) REFERENCES user(id)
 );
@@ -28,4 +29,4 @@ CREATE TABLE message (
 INSERT INTO user (username, password) VALUES ('rico', 'rico');
 INSERT INTO user (username, password) VALUES ('toto', 'toto');
 INSERT INTO conversation (user1_id, user2_id) VALUES (1, 2);
-INSERT INTO message (conversation_id, sender_id, content) VALUES (2, 1, 'Hello Rocco');
+INSERT INTO message (conversation_id, sender_id, content) VALUES (1, 2, 'Hello Rico');

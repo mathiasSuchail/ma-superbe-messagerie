@@ -91,12 +91,11 @@ def messages():
     else:
         return render_template("mailbox.html")
 
-if not Path(DATABASE) .exists():
-    with app.app_context():
-        db = get_db()
-        with app.open_resource('db/schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
+with app.app_context():
+    db = get_db()
+    with app.open_resource('db/schema.sql', mode='r') as f:
+        db.cursor().executescript(f.read())
+    db.commit()
 
 @app.route("/api/conversations")
 def conversations():
@@ -108,9 +107,50 @@ def conversations():
     cursor = get_db().cursor()
     cursor.execute('SELECT * FROM conversation LIMIT 1')
     field_names = [i[0] for i in cursor.description]
-    conversations_json = [dict(zip(field_names, row)) for row in conversations_data]
+    conversations = [dict(zip(field_names, row)) for row in conversations_data]
 
-    return jsonify(conversations_json)
+    #récupération du nom du déstinataire
+    for conversation in conversations:
+        if conversation["user1_id"] == user_id:
+            conversation["name"] = query_db('SELECT username FROM user WHERE id = ?', (conversation["user2_id"],), True)[0]
+        else:
+            conversation["name"] = query_db('SELECT username FROM user WHERE id = ?', (conversation["user1_id"],), True)[0]
+
+    #récupération des messages avec les champs de la conversation
+    for conversation in conversations:
+        messages = query_db('SELECT * FROM message WHERE conversation_id = ?', (conversation["id"],))
+
+        cursor.execute('SELECT * FROM message LIMIT 1')
+        field_names = [i[0] for i in cursor.description]
+        conversation["messages"] = [dict(zip(field_names, row)) for row in messages]
+        for message in conversation["messages"]:
+            message["name"] = query_db('SELECT username FROM user WHERE id = ?', (message["sender_id"],), True)[0]
+
+
+    return jsonify(conversations)
+
+@app.route("/api/user")
+def user():
+    user = query_db('SELECT id, username FROM user WHERE id = ?', (session["loggedUser"]["id"],), True)
+    cursor = get_db().cursor()
+    cursor.execute('SELECT * FROM user LIMIT 1')
+    field_names = [i[0] for i in cursor.description]
+    return jsonify(dict(zip(field_names, user)))
+
+@app.route("/api/messages", methods=["POST"])
+def messages_post():
+    if session.get("loggedUser") is None:
+        return jsonify({"error": "Non connecté"})
+    else:
+        data = request.get_json()
+
+        conversation_id = data["conversation_id"]
+        content = data["content"]
+        sender_id = session["loggedUser"]["id"]
+
+        get_db().execute("INSERT INTO message (conversation_id, sender_id, content) VALUES (?, ?, ?)", (conversation_id, sender_id, content))
+        get_db().commit()
+        return jsonify({"status": "ok"})
 
 @app.route("/test")
 def test():

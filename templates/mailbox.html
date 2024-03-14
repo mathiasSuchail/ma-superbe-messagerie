@@ -22,7 +22,7 @@
                 <button><i class="text-xl fa-solid fa-user hover:text-blue-500"></i></button>
                 <button class=""><a href="/logout"><i class="text-xl fa-solid fa-right-from-bracket hover:text-blue-500"></i></a></button>
             </div>
-            <h2 class="mx-auto mt-5">[[ username ]]</h2>
+            <h2 class="mx-auto mt-5">[[ activeUser.username ]]</h2>
             <input class="w-3/4 shadow border rounded-full mx-auto px-3 py-1" type="text" placeholder="Rechercher une conversation" v-model="search">
             <hr class="w-3/4 mx-auto">
             <button class="mx-auto text-blue-800 px-3 py-1 border-blue-300 shadow shadow-blue-300 rounded-xl hover:bg-blue-200" @click="showModal=true">
@@ -38,8 +38,8 @@
             <p class="m-auto text-slate-700" v-if="activeConversation === null">Veullez selectionner une conversation...</p>
             <div v-else>
                 <div class="flex flex-col gap-5 p-5 justify-start w-full">
-                    <div v-for="message in activeConversation.messages" class="w-full flex" :class="message.sender === username ? 'justify-end' : '' ">
-                        <p class="border shadow rounded-xl p-3 w-fit" :class="{'bg-blue-200': message.sender === username}">[[ message.content ]]</p>
+                    <div v-for="message in activeConversation.messages" class="w-full flex" :class="message['sender_id'] === activeUser.id ? 'justify-end' : '' ">
+                        <p class="border shadow rounded-xl p-3 w-fit" :class="{'bg-blue-200': message['sender_id'] === activeUser.id}">[[ message.content ]]</p>
                     </div>
                 </div>
                 <div class="relative">
@@ -67,7 +67,7 @@
             availableUsers: [
                 {
                     id: 2,
-                    name: "alix",
+                    name: "",
                 }
             ],
             userToAdd: {
@@ -77,51 +77,71 @@
                 concersations: []
             },
             showModal: false,
-            username: "Mathias SUCHAIL",
+            activeUser:{
+                id:'',
+                username:'',
+            },
             search: "",
             activeConversation: null,
-            conversations: [
-                {
-                    id: 1,
-                    name: "toto",
-                    unreadMessages: 0,
-                    messages: [
-                        {
-                            id: 1,
-                            content: "Salut, ça va ?",
-                            date: "12:00",
-                            sender: "toto"
-                        },
-                        {
-                            id: 2,
-                            content: "Oui et toi ?",
-                            date: "12:01",
-                            sender: this.username
-                        }
-                    ]
-                },
-            ]
+            conversations: []
         },
         methods: {
             sendMessage() {
-                const message = this.$refs.textarea.value;
-                if(message.trim() !== ""){
-                    this.activeConversation.messages.push({
-                        id: this.activeConversation.messages.length + 1,
-                        content: message,
-                        date: new Date().toLocaleTimeString(),
-                        sender: this.username
-                    });
-                }
-                this.$refs.textarea.value = "";
+                const content = this.$refs.textarea.value;
 
+                if (content.trim() === "") {
+                    return;
+                    this.$refs.textarea.value = "";
+                }
+                fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        conversation_id: this.activeConversation.id
+                    })
+                })
+                this.getConversations(this.activeConversation.id);
+                this.$refs.textarea.value = "";
+            },
+            autoRefresh() {
+                setInterval(() => {
+                    this.getConversations(this.activeConversation.id);
+                }, 1000);
             },
             addConversation() {
                 this.userToAdd= this.availableUsers.find(user => user.id === this.userToAdd.id);
                 this.userToAdd.messages= []
                 this.conversations.unshift(this.userToAdd)
                 this.showModal = false
+            },
+            getConversations(activconversationId = null){
+                fetch('/api/conversations')
+                    .then(response => response.json())
+                    .then(conversations => {
+                        this.conversations = conversations;
+                        if(activconversationId !== null){
+                            this.activeConversation = this.conversations.find(conversation => conversation.id === activconversationId);
+                        }
+                    });
+            },
+            getActiveUser(){
+                fetch('/api/user')
+                    .then(response => response.json())
+                    .then(user => {
+                        this.activeUser = user;
+                        console.log(this.activeUser)
+                    });
             }
+        },
+        beforeMount() {
+            this.getActiveUser();
+            this.getConversations();
+        },
+        mounted() {
+            this.autoRefresh();
         },
         computed: {
             filteredConversations() {
